@@ -1,2 +1,0 @@
-"id","name","model","function","interval_number","interval_type","numbercall","active"
-"dba_update","Partner Age Update","res.partner","update_ages",1,"days",-1,"true"

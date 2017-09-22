@@ -17,10 +17,10 @@ class sms_response():
      mms_url = ""
      message_id = ""
 
-class SmsGatewayTwilio(models.Model):
+class SmsGateway46elks(models.Model):
 
-    _name = "sms.gateway.twilio"
-    _description = "Twilio SMS Gateway"
+    _name = "sms.gateway.46elks"
+    _description = "46elks SMS Gateway"
     
     api_url = fields.Char(string='API URL')
     
@@ -47,17 +47,17 @@ class SmsGatewayTwilio(models.Model):
             
         #send the sms/mms
         base_url = self.env['ir.config_parameter'].search([('key','=','web.base.url')])[0].value
-        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'Body': sms_content.encode('utf-8'), 'StatusCallback': base_url + "/sms/twilio/receipt"}
+        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'Body': sms_content.encode('utf-8'), 'StatusCallback': base_url + "/sms/46elks/receipt"}
 
         if media:
             payload['MediaUrl'] = media_url
             
-        response_string = requests.post("https://api.twilio.com/2010-04-01/Accounts/" + str(sms_account.twilio_account_sid) + "/Messages", data=payload, auth=(str(sms_account.twilio_account_sid), str(sms_account.twilio_auth_token)))
+        response_string = requests.post("https://api.46elks.com/2010-04-01/Accounts/" + str(sms_account.46elks_account_sid) + "/Messages", data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
 
         #Analyse the reponse string and determine if it sent successfully other wise return a human readable error message   
         human_read_error = ""
         root = etree.fromstring(response_string.text.encode('utf-8'))
-        my_elements_human = root.xpath('/TwilioResponse/RestException/Message')
+        my_elements_human = root.xpath('/46elksResponse/RestException/Message')
         if len(my_elements_human) != 0:
 	    human_read_error = my_elements_human[0].text
         
@@ -83,7 +83,7 @@ class SmsGatewayTwilio(models.Model):
         
         if message_id != "":
             payload = {}
-            response_string = requests.get("https://api.twilio.com/2010-04-01/Accounts/" + sms_account.twilio_account_sid + "/Messages/" + message_id, data=payload, auth=(str(sms_account.twilio_account_sid), str(sms_account.twilio_auth_token)))
+            response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + sms_account.46elks_account_sid + "/Messages/" + message_id, data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
 	    root = etree.fromstring(str(response_string.text.encode('utf-8')))
             
             _logger.error(response_string.text)
@@ -96,10 +96,10 @@ class SmsGatewayTwilio(models.Model):
         else:
             #get a list of all new inbound message since the last check date
             payload = {}
-            if sms_account.twilio_last_check_date != False:
-                my_time = datetime.strptime(sms_account.twilio_last_check_date,'%Y-%m-%d %H:%M:%S')
+            if sms_account.46elks_last_check_date != False:
+                my_time = datetime.strptime(sms_account.46elks_last_check_date,'%Y-%m-%d %H:%M:%S')
                 payload = {'DateSent>': str(my_time.strftime('%Y-%m-%d'))}
-            response_string = requests.get("https://api.twilio.com/2010-04-01/Accounts/" + sms_account.twilio_account_sid + "/Messages", data=payload, auth=(str(sms_account.twilio_account_sid), str(sms_account.twilio_auth_token)))
+            response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + sms_account.46elks_account_sid + "/Messages", data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
             root = etree.fromstring(str(response_string.text.encode('utf-8')))            
             
             #get all pages
@@ -118,7 +118,7 @@ class SmsGatewayTwilio(models.Model):
                 #get the next page if there is one
 		next_page_uri = messages_tag[0].attrib['nextpageuri']
                 if next_page_uri != "":
-                    response_string = requests.get("https://api.twilio.com" + messages_tag[0].attrib['nextpageuri'], data=payload, auth=(str(sms_account.twilio_account_sid), str(sms_account.twilio_auth_token)))
+                    response_string = requests.get("https://api.46elks.com" + messages_tag[0].attrib['nextpageuri'], data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
 		    root = etree.fromstring(response_string.text.encode('utf-8'))
 		    messages_tag = root.xpath('//Messages')
 				
@@ -128,7 +128,7 @@ class SmsGatewayTwilio(models.Model):
 
 
 	
-        sms_account.twilio_last_check_date = datetime.utcnow()
+        sms_account.46elks_last_check_date = datetime.utcnow()
             
     def _add_message(self, sms_message, account_id):
         """Adds the new sms to the system"""       
@@ -149,7 +149,7 @@ class SmsGatewayTwilio(models.Model):
 	    
 	    target = self.env['sms.message'].find_owner_model(sms_message)
 	    
-	    twilio_gateway_id = self.env['sms.gateway'].search([('gateway_model_name', '=', 'sms.gateway.twilio')])
+	    46elks_gateway_id = self.env['sms.gateway'].search([('gateway_model_name', '=', 'sms.gateway.46elks')])
 
             discussion_subtype = self.env['ir.model.data'].get_object('mail', 'mt_comment')
             my_message = ""
@@ -194,7 +194,7 @@ class SmsGatewayTwilio(models.Model):
                     media_list_url = sub_resource.text
                     _logger.error(media_list_url)
                     
-                    media_response_string = requests.get("https://api.twilio.com" + media_list_url, auth=(str(sms_account.twilio_account_sid), str(sms_account.twilio_auth_token)))
+                    media_response_string = requests.get("https://api.46elks.com" + media_list_url, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
 
                     media_root = etree.fromstring(media_response_string.text.encode('utf-8'))
                     for media_mms in media_root.xpath('//MediaList/Media'):
@@ -203,18 +203,18 @@ class SmsGatewayTwilio(models.Model):
                         first_media_url = media_mms.find('Uri').text
                         _logger.error(first_media_url)
                     
-                        mms_media = base64.b64encode( requests.get("https://api.twilio.com" + first_media_url, ).content )                    
+                        mms_media = base64.b64encode( requests.get("https://api.46elks.com" + first_media_url, ).content )                    
                         self.env['sms.message.media'].sudo().create({'sms_id': history_id.id, 'data': mms_media, 'data_filename': media_filename, 'content_type': media_mms.find('ContentType').text })
 
 
     def delivary_receipt(self, account_sid, message_id):
         """Updates the sms message when it is successfully received by the mobile phone"""
-        my_account = self.env['sms.account'].search([('twilio_account_sid','=', account_sid)])[0]
-        response_string = requests.get("https://api.twilio.com/2010-04-01/Accounts/" + my_account.twilio_account_sid + "/Messages/" + message_id, auth=(str(my_account.twilio_account_sid), str(my_account.twilio_auth_token)))
+        my_account = self.env['sms.account'].search([('46elks_account_sid','=', account_sid)])[0]
+        response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + my_account.46elks_account_sid + "/Messages/" + message_id, auth=(str(my_account.46elks_account_sid), str(my_account.46elks_auth_token)))
         root = etree.fromstring(str(response_string.text))
         
         
-        #map the Twilio delivary code to the sms delivary states 
+        #map the 46elks delivary code to the sms delivary states 
 	delivary_state = ""
 	if root.xpath('//Status')[0].text == "failed":
 	    delivary_state = "failed"
@@ -230,24 +230,24 @@ class SmsGatewayTwilio(models.Model):
             my_message[0].status_code = delivary_state
             my_message[0].delivary_error_string = root.xpath('//ErrorMessage')[0].text        
             
-class SmsAccountTwilio(models.Model):
+class SmsAccount46elks(models.Model):
 
     _inherit = "sms.account"
-    _description = "Adds the Twilio specfic gateway settings to the sms gateway accounts"
+    _description = "Adds the 46elks specfic gateway settings to the sms gateway accounts"
     
-    twilio_account_sid = fields.Char(string='Account SID')
-    twilio_auth_token = fields.Char(string='Auth Token')
-    twilio_last_check_date = fields.Datetime(string="Last Check Date")
+    46elks_account_sid = fields.Char(string='Account SID')
+    46elks_auth_token = fields.Char(string='Auth Token')
+    46elks_last_check_date = fields.Datetime(string="Last Check Date")
     
     @api.one
-    def twilio_quick_setup(self):
-        """Configures your Twilio account so inbound messages point to your server, also adds mobile numbers to the system"""
-	response_string = requests.get("https://api.twilio.com/2010-04-01/Accounts/" + self.twilio_account_sid, auth=(str(self.twilio_account_sid), str(self.twilio_auth_token)))
+    def 46elks_quick_setup(self):
+        """Configures your 46elks account so inbound messages point to your server, also adds mobile numbers to the system"""
+	response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid, auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
         if response_string.status_code == 200:
-            response_string_twilio_numbers = requests.get("https://api.twilio.com/2010-04-01/Accounts/" + self.twilio_account_sid + "/IncomingPhoneNumbers", auth=(str(self.twilio_account_sid), str(self.twilio_auth_token)))
+            response_string_46elks_numbers = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid + "/IncomingPhoneNumbers", auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
             
-            #go through each twilio number in the account and set the the sms url
-            root = etree.fromstring(str(response_string_twilio_numbers.text))
+            #go through each 46elks number in the account and set the the sms url
+            root = etree.fromstring(str(response_string_46elks_numbers.text))
 	    my_from_number_list = root.xpath('//IncomingPhoneNumber')
 	    for my_from_number in my_from_number_list:
 	        av_phone = my_from_number.xpath('//PhoneNumber')[0].text
@@ -258,11 +258,11 @@ class SmsAccountTwilio(models.Model):
                 if self.env['sms.number'].search_count([('mobile_number','=',av_phone)]) == 0:
                     vsms = self.env['sms.number'].create({'name': av_phone, 'mobile_number': av_phone,'account_id':self.id})
 	        
-	        payload = {'SmsUrl': str(request.httprequest.host_url + "sms/twilio/receive")}
-	        requests.post("https://api.twilio.com/2010-04-01/Accounts/" + self.twilio_account_sid + "/IncomingPhoneNumbers/" + sid, data=payload, auth=(str(self.twilio_account_sid), str(self.twilio_auth_token)))
+	        payload = {'SmsUrl': str(request.httprequest.host_url + "sms/46elks/receive")}
+	        requests.post("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid + "/IncomingPhoneNumbers/" + sid, data=payload, auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
                 
                 #Check for new messages
-                self.env['sms.gateway.twilio'].check_messages(self.id)
+                self.env['sms.gateway.46elks'].check_messages(self.id)
         else:
             raise Warning("Bad Credentials")
 
