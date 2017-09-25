@@ -1,33 +1,34 @@
 # -*- coding: utf-8 -*-
-import requests
-from datetime import datetime
-from lxml import etree
-import logging
-_logger = logging.getLogger(__name__)
-import base64
+##############################################################################
+#
+# Odoo, Open Source Enterprise Resource Management Solution, third party addon
+# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
 
-from openerp.http import request
-from openerp import api, fields, models
+from openerp import api, fields, models, _
 from openerp.exceptions import Warning
 
-class sms_response():
-     delivary_state = ""
-     response_string = ""
-     human_read_error = ""
-     mms_url = ""
-     message_id = ""
+import logging
+_logger = logging.getLogger(__name__)
 
-class SmsMessageMMS(models.Model):
-
+class SmsMessage(models.Model):
     _inherit = "sms.message"
     
-    media_ids = fields.One2many('sms.message.media', 'sms_id', string='Media List')
+    flashsms = fields.Boolean()
+    cost = fields.Float()
     
-class SmsMessageMedia(models.Model):
-
-    _name = "sms.message.media"
     
-    sms_id = fields.Many2one('sms.message', string="SMS Message")
-    data = fields.Binary(string="Data")
-    data_filename = fields.Char(string="Filename")
-    content_type = fields.Char(string="Content Type")

@@ -2,6 +2,7 @@
 <openerp>
     <data>
     
+<!--
       <record id="sms_account_view_form_inherit_sms_frame_46elks_media" model="ir.ui.view">
           <field name="name">sms.message.view.form.meida</field>
           <field name="model">sms.message</field>
@@ -18,6 +19,7 @@
       	      </field>
       	  </field>
       </record>
+-->
       
   </data>
 </openerp>

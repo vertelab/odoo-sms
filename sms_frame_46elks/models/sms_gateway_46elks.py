@@ -1,21 +1,33 @@
 # -*- coding: utf-8 -*-
-import requests
-from datetime import datetime
-from lxml import etree
-import logging
-_logger = logging.getLogger(__name__)
-import base64
+##############################################################################
+#
+# Odoo, Open Source Enterprise Resource Management Solution, third party addon
+# Copyright (C) 2017- Vertel AB (<http://vertel.se>).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
 
-from openerp.http import request
-from openerp import api, fields, models
+from openerp import api, fields, models, _
 from openerp.exceptions import Warning
 
-class sms_response():
-     delivary_state = ""
-     response_string = ""
-     human_read_error = ""
-     mms_url = ""
-     message_id = ""
+import requests
+import json
+
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class SmsGateway46elks(models.Model):
 
@@ -47,12 +59,18 @@ class SmsGateway46elks(models.Model):
             
         #send the sms/mms
         base_url = self.env['ir.config_parameter'].search([('key','=','web.base.url')])[0].value
-        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'Body': sms_content.encode('utf-8'), 'StatusCallback': base_url + "/sms/46elks/receipt"}
+        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'message': sms_content.encode('utf-8'), 'StatusCallback': base_url + "/sms/46elks/receipt"}
+    
+        #~ payload['whendelivered'] = base_url 
+        #~ payload['flashsms'] = 'no' 
 
         if media:
-            payload['MediaUrl'] = media_url
+            payload['image'] = media_url
             
-        response_string = requests.post("https://api.46elks.com/2010-04-01/Accounts/" + str(sms_account.46elks_account_sid) + "/Messages", data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
+        response_string = requests.post("https://api.46elks.com/a1/SMS",
+            data=payload, 
+            auth=(str(sms_account.x46elks_account_sid or ''), str(sms_account.x46elks_auth_token or ''))
+        )
 
         #Analyse the reponse string and determine if it sent successfully other wise return a human readable error message   
         human_read_error = ""
@@ -79,190 +97,99 @@ class SmsGateway46elks(models.Model):
 
     def check_messages(self, account_id, message_id=""):
         """Checks for any new messages or if the message id is specified get only that message"""
-        sms_account = self.env['sms.account'].browse(account_id)
-        
-        if message_id != "":
-            payload = {}
-            response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + sms_account.46elks_account_sid + "/Messages/" + message_id, data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
-	    root = etree.fromstring(str(response_string.text.encode('utf-8')))
-            
-            _logger.error(response_string.text)
-            
-	    my_messages = root.xpath('//Message')
-            sms_message = my_messages[0]
-            #only get the inbound ones as we track the outbound ones back to a user profile
-            if sms_message.xpath('//Direction')[0].text == "inbound":
-                self._add_message(sms_message, account_id)
-        else:
-            #get a list of all new inbound message since the last check date
-            payload = {}
-            if sms_account.46elks_last_check_date != False:
-                my_time = datetime.strptime(sms_account.46elks_last_check_date,'%Y-%m-%d %H:%M:%S')
-                payload = {'DateSent>': str(my_time.strftime('%Y-%m-%d'))}
-            response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + sms_account.46elks_account_sid + "/Messages", data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
-            root = etree.fromstring(str(response_string.text.encode('utf-8')))            
-            
-            #get all pages
-            messages_tag = root.xpath('//Messages')
-            
-            #Loop through all pages until you have reached the end
-            while True:
-                
-                my_messages = messages_tag[0].xpath('//Message')
-                for sms_message in my_messages:
-                    
-                    #only get the inbound ones as we track the outbound ones back to a user profile
-                    if sms_message.find('Direction').text == "inbound":
-                        self._add_message(sms_message, account_id)
-                        
-                #get the next page if there is one
-		next_page_uri = messages_tag[0].attrib['nextpageuri']
-                if next_page_uri != "":
-                    response_string = requests.get("https://api.46elks.com" + messages_tag[0].attrib['nextpageuri'], data=payload, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
-		    root = etree.fromstring(response_string.text.encode('utf-8'))
-		    messages_tag = root.xpath('//Messages')
-				
-		#End the loop if there are no more pages
-		if next_page_uri == "":
-		    break
-
-
-	
-        sms_account.46elks_last_check_date = datetime.utcnow()
+        pass
             
     def _add_message(self, sms_message, account_id):
-        """Adds the new sms to the system"""       
-        delivary_state = ""
-	if sms_message.find('Status').text == "failed":
-	    delivary_state = "failed"
-        elif sms_message.find('Status').text == "sent":
-	    delivary_state = "successful"
-	elif sms_message.find('Status').text == "delivered":
-	    delivary_state = "DELIVRD"
-	elif sms_message.find('Status').text == "undelivered":
-	    delivary_state = "UNDELIV"
-	elif sms_message.find('Status').text == "received":
-	    delivary_state = "RECEIVED"
-	
-        my_message = self.env['sms.message'].search([('sms_gateway_message_id','=', sms_message.find('Sid').text)])
-        if len(my_message) == 0 and sms_message.find('Direction').text == "inbound":
-	    
-	    target = self.env['sms.message'].find_owner_model(sms_message)
-	    
-	    46elks_gateway_id = self.env['sms.gateway'].search([('gateway_model_name', '=', 'sms.gateway.46elks')])
-
-            discussion_subtype = self.env['ir.model.data'].get_object('mail', 'mt_comment')
-            my_message = ""
-
-            if target['target_model'] == "res.partner":
-                model_id = self.env['ir.model'].search([('model','=', target['target_model'])])
-
-                my_record = self.env[target['target_model']].browse( int(target['record_id'].id) )
-                my_message = my_record.message_post(body=sms_message.find('Body').text, subject="SMS Received", subtype_id=discussion_subtype.id, author_id=my_record.id, message_type="comment")
-
-                #Notify followers of this partner who are listenings to the 'discussions' subtype
-                for notify_partner in self.env['mail.followers'].search([('res_model','=','res.partner'),('res_id','=',target['record_id'].id), ('subtype_ids','=',discussion_subtype.id)]):
-                    my_message.needaction_partner_ids = [(4,notify_partner.partner_id.id)]
-
-                #Create the sms record in history
-                history_id = self.env['sms.message'].create({'account_id': account_id, 'status_code': "RECEIVED", 'from_mobile': sms_message.find('From').text, 'to_mobile': sms_message.find('To').text, 'sms_gateway_message_id': sms_message.find('Sid').text, 'sms_content': sms_message.find('Body').text, 'direction':'I', 'message_date':sms_message.find('DateUpdated').text, 'model_id':model_id.id, 'record_id':int(target['record_id'].id), 'by_partner_id': my_record.id})
-            elif target['target_model'] == "crm.lead":
-
-                model_id = self.env['ir.model'].search([('model','=', target['target_model'])])
-
-                my_record = self.env[target['target_model']].browse( int(target['record_id'].id) )
-                my_message = my_record.message_post(body=sms_message.find('Body').text, subject="SMS Received", subtype_id=discussion_subtype.id, message_type="comment")
-
-                #Notify followers of this partner who are listenings to the 'discussions' subtype
-                for notify_partner in self.env['mail.followers'].search([('res_model','=','crm.lead'),('res_id','=',target['record_id'].id), ('subtype_ids','=',discussion_subtype.id)]):
-                    my_message.needaction_partner_ids = [(4,notify_partner.partner_id.id)]
-
-                #Create the sms record in history
-                history_id = self.env['sms.message'].create({'account_id': account_id, 'status_code': "RECEIVED", 'from_mobile': sms_message.find('From').text, 'to_mobile': sms_message.find('To').text, 'sms_gateway_message_id': sms_message.find('Sid').text, 'sms_content': sms_message.find('Body').text, 'direction':'I', 'message_date':sms_message.find('DateUpdated').text, 'model_id':model_id.id, 'record_id':int(target['record_id'].id)})
-            
-            else:
-                #Create the sms record in history without the model or record_id 
-                history_id = self.env['sms.message'].create({'account_id': account_id, 'status_code': "RECEIVED", 'from_mobile': sms_message.find('From').text, 'to_mobile': sms_message.find('To').text, 'sms_gateway_message_id': sms_message.find('Sid').text, 'sms_content': sms_message.find('Body').text, 'direction':'I', 'message_date':sms_message.find('DateUpdated').text})                
-
-
-
-            _logger.error(sms_message.find('NumMedia').text)
-            if sms_message.find('NumMedia').text > 0:
-                sms_account = self.env['sms.account'].browse(account_id)
-                
-                for sub_resource in sms_message.find('SubresourceUris'):
-                    media_list_url = sub_resource.text
-                    _logger.error(media_list_url)
-                    
-                    media_response_string = requests.get("https://api.46elks.com" + media_list_url, auth=(str(sms_account.46elks_account_sid), str(sms_account.46elks_auth_token)))
-
-                    media_root = etree.fromstring(media_response_string.text.encode('utf-8'))
-                    for media_mms in media_root.xpath('//MediaList/Media'):
-                        media_filename = media_mms.find("Sid").text + ".jpg"
-
-                        first_media_url = media_mms.find('Uri').text
-                        _logger.error(first_media_url)
-                    
-                        mms_media = base64.b64encode( requests.get("https://api.46elks.com" + first_media_url, ).content )                    
-                        self.env['sms.message.media'].sudo().create({'sms_id': history_id.id, 'data': mms_media, 'data_filename': media_filename, 'content_type': media_mms.find('ContentType').text })
-
+        pass
 
     def delivary_receipt(self, account_sid, message_id):
-        """Updates the sms message when it is successfully received by the mobile phone"""
-        my_account = self.env['sms.account'].search([('46elks_account_sid','=', account_sid)])[0]
-        response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + my_account.46elks_account_sid + "/Messages/" + message_id, auth=(str(my_account.46elks_account_sid), str(my_account.46elks_auth_token)))
-        root = etree.fromstring(str(response_string.text))
-        
-        
-        #map the 46elks delivary code to the sms delivary states 
-	delivary_state = ""
-	if root.xpath('//Status')[0].text == "failed":
-	    delivary_state = "failed"
-	elif root.xpath('//Status')[0].text == "sent":
-	    delivary_state = "successful"
-	elif root.xpath('//Status')[0].text == "delivered":
-	    delivary_state = "DELIVRD"
-	elif root.xpath('//Status')[0].text == "undelivered":
-	    delivary_state = "UNDELIV"
-        
-        my_message = self.env['sms.message'].search([('sms_gateway_message_id','=', message_id)])
-        if len(my_message) > 0:
-            my_message[0].status_code = delivary_state
-            my_message[0].delivary_error_string = root.xpath('//ErrorMessage')[0].text        
+        pass
             
 class SmsAccount46elks(models.Model):
 
     _inherit = "sms.account"
     _description = "Adds the 46elks specfic gateway settings to the sms gateway accounts"
     
-    46elks_account_sid = fields.Char(string='Account SID')
-    46elks_auth_token = fields.Char(string='Auth Token')
-    46elks_last_check_date = fields.Datetime(string="Last Check Date")
+    x46elks_account_sid = fields.Char(string='Account SID')
+    x46elks_auth_token = fields.Char(string='Auth Token')
+    x46elks_type = fields.Selection([('main','Main Account'),('sub','Sub Account')],string='Type',help="Type of account")
+    x46elks_last_check_date = fields.Datetime(string="Last Check Date")
+    x46elks_currency = fields.Many2one(comodel_name='res.currency',string='Currency')
+    x46elks_balance = fields.Float(string='Balance')
+    x46elks_mobilenumber = fields.Char(string='Mobile number',help="Register mobile number for this account, if this is empty it's probably a subaccount.")
+    x46elks_email = fields.Char(string='Email',help="Register mobile number for this account, if this is empty it's probably a subaccount.")
     
+
     @api.one
-    def 46elks_quick_setup(self):
-        """Configures your 46elks account so inbound messages point to your server, also adds mobile numbers to the system"""
-	response_string = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid, auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
-        if response_string.status_code == 200:
-            response_string_46elks_numbers = requests.get("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid + "/IncomingPhoneNumbers", auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
-            
-            #go through each 46elks number in the account and set the the sms url
-            root = etree.fromstring(str(response_string_46elks_numbers.text))
-	    my_from_number_list = root.xpath('//IncomingPhoneNumber')
-	    for my_from_number in my_from_number_list:
-	        av_phone = my_from_number.xpath('//PhoneNumber')[0].text
-	        sid = my_from_number.xpath('//Sid')[0].text
-	        
-                    
-                #Create a new mobile number
-                if self.env['sms.number'].search_count([('mobile_number','=',av_phone)]) == 0:
-                    vsms = self.env['sms.number'].create({'name': av_phone, 'mobile_number': av_phone,'account_id':self.id})
-	        
-	        payload = {'SmsUrl': str(request.httprequest.host_url + "sms/46elks/receive")}
-	        requests.post("https://api.46elks.com/2010-04-01/Accounts/" + self.46elks_account_sid + "/IncomingPhoneNumbers/" + sid, data=payload, auth=(str(self.46elks_account_sid), str(self.46elks_auth_token)))
+    def x46elks_checkaccount(self):
+        response = requests.get("https://%s:%s@api.46elks.com/a1/me" % (self.x46elks_account_sid , self.x46elks_auth_token))
+        
+        _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
+        if response.ok:
+            res = json.loads(response.content)
+            if res.get('name'):
+                self.name = res['name']
+                self.x46elks_type = 'sub'
+            if res.get('displayname'):
+                self.name = res['displayname']
+                self.x46elks_type = 'main'
+            if res.get('mobilenumber'):
+                self.x46elks_mobilenumber = res['mobilenumber']
+            if res.get('balance'):
+                self.x46elks_balance = res['balance'] / 100.0 / 100.0
+            if res.get('email'):
+                self.x46elks_email = res['email']
                 
-                #Check for new messages
-                self.env['sms.gateway.46elks'].check_messages(self.id)
-        else:
-            raise Warning("Bad Credentials")
+            currency = self.env['res.currency'].search([('name','=',res.get('currency'))])
+            if currency:
+                self.x46elks_currency = currency
+                
+    @api.one
+    def x46elks_checknumber(self):
+        response = requests.get("https://%s:%s@api.46elks.com/a1/Numbers" % (self.x46elks_account_sid , self.x46elks_auth_token))
+        
+        _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
+        if response.ok:
+            res = json.loads(response.content)
+            raise Warning(res)
+
+
+    @api.one
+    def x46elks_checkmessages(self):
+        
+        def _get_status(status):
+            if message.get('status') == 'delivered':
+                return 'DELIVRD'
+            if message.get('status') == 'sent':
+                return 'successful'
+            if message.get('status') == 'failed':
+                return 'UNDELIV'
+
+
+        response = requests.get("https://%s:%s@api.46elks.com/a1/SMS" % (self.x46elks_account_sid , self.x46elks_auth_token))
+        _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
+        if response.ok:
+            res = json.loads(response.content)
+            for message in res.get('data'):
+                _logger.error('%s' % message)
+                sms = self.env['sms.message'].search([('sms_gateway_message_id','=',message.get('id'))])
+                if not sms:
+                    self.env['sms.message'].create({
+                        'sms_gateway_message_id': message.get('id'),
+                        'status': _get_status(message.get('status')),
+                        'message_date': message.get('delivered'),
+                        'direction': 'I' if message.get('direction') == 'incoming' else 'O',
+                        'from_mobile': message.get('from'),
+                        'to_mobile': message.get('to'),
+                        'created': message.get('created'),
+                        'flashsms': message.get('flashsms'),
+                        'parts': message.get('parts'),
+                        'cost': message.get('cost'),
+                        'sms_content': message.get('message'),
+                        'account_id': self.id,
+                    })
+
+                #~ self.x46elks_last_check_date = fields.Date.now()
+    
+
 
