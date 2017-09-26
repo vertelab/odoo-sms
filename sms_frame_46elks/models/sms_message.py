@@ -30,5 +30,11 @@ class SmsMessage(models.Model):
     
     flashsms = fields.Boolean()
     cost = fields.Float()
+    type = fields.Selection([('sms','SMS'),('voice','Voice'),('mms','MMS')])
     
+class SmsCompose(models.Model):
+
+    _inherit = "sms.compose"
     
+    flashsms = fields.Boolean()
+    type = fields.Selection([('sms','SMS'),('voice','Voice'),('mms','MMS')])

@@ -59,7 +59,7 @@ class SmsGateway46elks(models.Model):
             
         #send the sms/mms
         base_url = self.env['ir.config_parameter'].search([('key','=','web.base.url')])[0].value
-        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'message': sms_content.encode('utf-8'), 'StatusCallback': base_url + "/sms/46elks/receipt"}
+        payload = {'From': format_from.encode('utf-8'), 'To': format_to.encode('utf-8'), 'message': sms_content.encode('utf-8'),}
     
         #~ payload['whendelivered'] = base_url 
         #~ payload['flashsms'] = 'no' 
@@ -110,14 +110,17 @@ class SmsAccount46elks(models.Model):
     _inherit = "sms.account"
     _description = "Adds the 46elks specfic gateway settings to the sms gateway accounts"
     
+    x46elks_parent_id = fields.Many2one(string='Parent',comodel_name="sms.account")
     x46elks_account_sid = fields.Char(string='Account SID')
     x46elks_auth_token = fields.Char(string='Auth Token')
     x46elks_type = fields.Selection([('main','Main Account'),('sub','Sub Account')],string='Type',help="Type of account")
     x46elks_last_check_date = fields.Datetime(string="Last Check Date")
     x46elks_currency = fields.Many2one(comodel_name='res.currency',string='Currency')
     x46elks_balance = fields.Float(string='Balance')
+    x46elks_usagelimit = fields.Float(string='Usage Limit')
     x46elks_mobilenumber = fields.Char(string='Mobile number',help="Register mobile number for this account, if this is empty it's probably a subaccount.")
     x46elks_email = fields.Char(string='Email',help="Register mobile number for this account, if this is empty it's probably a subaccount.")
+    x46elks_create_date = fields.Datetime(string='Create Date',help="Date when account was registred.")
     
 
     @api.one
@@ -139,11 +142,60 @@ class SmsAccount46elks(models.Model):
                 self.x46elks_balance = res['balance'] / 100.0 / 100.0
             if res.get('email'):
                 self.x46elks_email = res['email']
-                
+            if res.get('trialactivated'):
+                self.x46elks_create_date = res['trialactivated'].replace('T',' ') 
             currency = self.env['res.currency'].search([('name','=',res.get('currency'))])
             if currency:
                 self.x46elks_currency = currency
-                
+            self.x46elks_last_check_date = fields.Datetime.now()
+        else:
+            raise Warning(response.status_code,response.ok,response.content)
+    @api.one
+    def x46elks_checksubaccount(self):
+        response = requests.get("https://%s:%s@api.46elks.com/a1/Subaccounts" % (self.x46elks_account_sid , self.x46elks_auth_token))
+        
+        _logger.error('get response %s %s %s' % (response.status_code,response.ok,response.content))
+        if response.ok:
+            res = json.loads(response.content)
+            for sa in res.get('data'):
+                subaccount = self.env['sms.account'].search([('x46elks_account_sid','=',sa.get('id'))])
+                if subaccount:
+                    subaccount.x46elks_type = 'sub'
+                    if not self.id == subaccount.id:
+                        subaccount.x46elks_parent_id = self.id
+                    subaccount.account_gateway_id = self.account_gateway_id.id
+                    if sa.get('secret'):
+                        subaccount.x46elks_auth_token = sa.get('secret')
+                    if sa.get('balancedused'):
+                        subaccount.x46elks_balance = sa.get('balancedused')
+                    if sa.get('usagelimit'):
+                        subaccount.x46elks_usagelimit = sa.get('usagelimit')
+                    if sa.get('name'):
+                        subaccount.name = sa.get('name')
+                    currency = self.env['res.currency'].search([('name','=',sa.get('currency'))])
+                    if currency:
+                        subaccount.x46elks_currency = currency                        
+                        
+                    if sa.get('created'):
+                        subaccount.x46elks_create_date = sa.get('created').replace('T',' ')
+                    subaccount.x46elks_last_check_date = fields.Datetime.now()
+                else:
+                    self.env['sms.account'].create({
+                        'x46elks_type': 'sub',
+                        'x46elks_parent_id': self.id,
+                        'account_gateway_id': self.account_gateway_id.id,
+                        'x46elks_auth_token': sa.get('secret'),
+                        'x46elks_balance': sa.get('balancedused'),
+                        'x46elks_usagelimit': sa.get('usagelimit'),
+                        'name': sa.get('name'),
+                        'x46elks_account_sid': sa.get('id'),
+                        'x46elks_create_date': sa.get('created').replace('T',' '),
+                    })
+                    
+                self.x46elks_last_check_date = fields.Datetime.now()
+        else:
+            raise Warning(response.status_code,response.ok,response.content)
+            #raise Warning(res)
     @api.one
     def x46elks_checknumber(self):
         response = requests.get("https://%s:%s@api.46elks.com/a1/Numbers" % (self.x46elks_account_sid , self.x46elks_auth_token))
@@ -189,7 +241,22 @@ class SmsAccount46elks(models.Model):
                         'account_id': self.id,
                     })
 
-                #~ self.x46elks_last_check_date = fields.Date.now()
+                self.x46elks_last_check_date = fields.Datetime.now()
     
 
+class SmsNumber(models.Model):
 
+    _inherit = "sms.number"
+    
+    #~ name = fields.Char(string="Name") 
+    #~ mobile_number = fields.Char(string="Sender ID", help="A mobile phone number or a 1-11 character alphanumeric name")
+    #~ account_id = fields.Many2one('sms.account', string="Account")
+
+    number_id = fields.Char()
+    active = fields.Boolean()
+    capabilities = fields.Selection([('sms','SMS'),('voice','Voice'),('mms','MMS')])
+    sms_url = fields.Char()
+    mms_url = fields.Char()
+    voice_start = fields.Char()
+    
+    

@@ -11,21 +11,53 @@
             <group>
               <field name="x46elks_account_sid" />
               <field name="x46elks_auth_token" />
+              <field name="x46elks_parent_id" attrs="{'invisible': [('x46elks_type','=','main')]}"/>
               <field name="x46elks_type" />
-              <field name="x46elks_currency" />
+              <field name="x46elks_currency"/>
               <field name="x46elks_balance" />
-              <field name="x46elks_mobilenumber" />
-              <field name="x46elks_email" />
+              <field name="x46elks_usagelimit" attrs="{'invisible': [('x46elks_type','=','main')]}" />
+              <field name="x46elks_mobilenumber" attrs="{'invisible': [('x46elks_type','=','sub')]}" />
+              <field name="x46elks_email" attrs="{'invisible': [('x46elks_type','=','sub')]}" />
+              <field name="x46elks_create_date" />
               <field name="x46elks_last_check_date" />
-           </group>      
-           <group col="12">
-           <button name="x46elks_quick_setup" type="object" string="Quick Setup" help="Points 46elks to your odoo server" />
+            </group>
+            <group col="12">
+              <button name="x46elks_quick_setup" type="object" string="Quick Setup" help="Points 46elks to your odoo server" />
               <button name="x46elks_checkmessages" type="object" string="Check Messages" help="Points 46elks to yourPoints 46elks to your odoo server" />
               <button name="x46elks_checkaccount" type="object" string="Check Account" help="Points 46elks to yourPoints 46elks to your odoo server" />
+              <button name="x46elks_checksubaccount" type="object" string="Check Sub Account" help="Points 46elks to yourPoints 46elks to your odoo server" />
               <button name="x46elks_checknumber" type="object" string="Check Number" help="Points 46elks to yourPoints 46elks to your odoo server" />
-         </group>
+            </group>
           </div>
         </xpath>
+      </field>
+    </record>
+    <record id="sms_account_view_tree" model="ir.ui.view">
+      <field name="name">sms.account.view.tree</field>
+      <field name="model">sms.account</field>
+      <field name="inherit_id" ref="sms_frame.sms_account_view_tree" />
+      <field name="arch" type="xml">
+        <field name="account_gateway_id" position="after">
+          <field name="x46elks_parent_id" />
+          <field name="x46elks_balance" />
+          <field name="x46elks_last_check_date" />
+        </field>
+      </field>
+    </record>
+    <record id="sms_account_view_search" model="ir.ui.view">
+      <field name="name">sms.account.view.search</field>
+      <field name="model">sms.account</field>
+      <field name="arch" type="xml">
+        <search string="Search Project">
+          <field name="name" string="Account Name" />
+          <field name="account_gateway_id" string="Gateway" />
+          <field name="x46elks_parent_id" string="Parent" />
+          <separator />
+          <group expand="0" string="Group By">
+            <filter string="Gateway" name="Gateway" context="{'group_by':'account_gateway_id'}" />
+            <filter string="Parent" name="Parent" context="{'group_by':'x46elks_parent_id'}" />
+          </group>
+        </search>
       </field>
     </record>
   </data>
