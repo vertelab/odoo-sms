@@ -242,7 +242,6 @@ class SmsAccount46elks(models.Model):
                     })
 
                 self.x46elks_last_check_date = fields.Datetime.now()
-    
 
 class SmsNumber(models.Model):
 
@@ -284,4 +283,21 @@ class SmsNumberWizard(models.TransientModel):
                 'context': {},
         }
     
+class SmsNumber(models.TransientModel):
+    _name = 'sms.account.number.wizard'
+
+    country = fields.Many2one(comodel_name="res.country")
     
+    @api.multi
+    def number(self):
+        _logger.warn('\n\nmodel: %s' % (self.country))
+        profile = self.create({'object_id' : '%s,%s' % (model, id)})
+        return {
+                    'res_model': 'profile.model',
+                    'res_id': profile.id,
+                    'views': [[False, 'form']],
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'target': 'new',
+                    'context': {},
+                }
