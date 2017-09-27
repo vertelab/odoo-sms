@@ -254,9 +254,34 @@ class SmsNumber(models.Model):
 
     number_id = fields.Char()
     active = fields.Boolean()
-    capabilities = fields.Selection([('sms','SMS'),('voice','Voice'),('mms','MMS')])
+    capabilities = fields.Selection([('sms','SMS'),('mms','MMS'),('voice','Voice')],default='sms')
     sms_url = fields.Char()
     mms_url = fields.Char()
     voice_start = fields.Char()
+        
+class SmsNumberWizard(models.TransientModel):
+    _name = 'sms.account.number.wizard'
+
+    country = fields.Many2one(comodel_name="res.country")
+    
+    @api.multi
+    def number(self):
+        _logger.warn('\n\nmodel: %s %s' % (self.country,self._context))
+        number = self.env['sms.number'].create({
+            'name' : 'My number',
+            'mobile_number' : '070999',
+            'number_id' : 'Hello world',
+            'active' : True,
+            'account_id' : self._context['active_id'],
+            })
+        return {
+                'res_model': 'sms.number',
+                'res_id': number.id,
+                'views': [[False, 'form']],
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+                #~ 'target': 'new',
+                'context': {},
+        }
     
     

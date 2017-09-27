@@ -11,9 +11,9 @@
             <group>
               <field name="x46elks_account_sid" />
               <field name="x46elks_auth_token" />
-              <field name="x46elks_parent_id" attrs="{'invisible': [('x46elks_type','=','main')]}"/>
+              <field name="x46elks_parent_id" attrs="{'invisible': [('x46elks_type','=','main')]}" />
               <field name="x46elks_type" />
-              <field name="x46elks_currency"/>
+              <field name="x46elks_currency" />
               <field name="x46elks_balance" />
               <field name="x46elks_usagelimit" attrs="{'invisible': [('x46elks_type','=','main')]}" />
               <field name="x46elks_mobilenumber" attrs="{'invisible': [('x46elks_type','=','sub')]}" />
@@ -58,6 +58,61 @@
             <filter string="Parent" name="Parent" context="{'group_by':'x46elks_parent_id'}" />
           </group>
         </search>
+      </field>
+    </record>
+    <!-- Number wizard -->
+    <record id="number_wizard" model="ir.ui.view">
+      <field name="name">sms.account.number.form</field>
+      <field name="model">sms.account.number.wizard</field>
+      <field name="arch" type="xml">
+        <form string="Create a new number">
+          <group>
+            <field name="country" />
+          </group>
+          <footer>
+            <button icon="gtk-print" name="number" string="Create" type="object" default_focus="1" class="oe_highlight" />
+            or
+            <button special="cancel" string="Close" type="object" class="oe_link" />
+          </footer>
+        </form>
+      </field>
+    </record>
+    <!--
+         <record id="action_number_wizard" model="ir.actions.act_window">
+         <field name="name">New number</field>
+         <field name="type">ir.actions.act_window</field>
+         <field name="res_model">sms.account.number.wizard</field>
+         <field name="view_type">form</field>
+         <field name="view_mode">form</field>
+         <field name="target">new</field>
+         </record>
+    -->
+    <act_window name="Number" res_model="sms.account.number.wizard" src_model="sms.account" view_mode="form" target="new" key2="client_action_multi" id="action_number_wizard" />
+    <record id="sms_number_view_fornm" model="ir.ui.view">
+      <field name="name">sms numbers form view</field>
+      <field name="model">sms.number</field>
+      <field name="inherit_id" ref="sms_frame.sms_number_view_fornm" />
+      <field name="arch" type="xml">
+        <field name="account_id" position="after">
+          <field name="number_id" />
+          <field name="capabilities" />
+          <field name="sms_url" />
+          <field name="mms_url" />
+          <field name="voice_start" />
+          <field name="active" />
+        </field>
+      </field>
+    </record>
+    <record id="sms_number_view_tree" model="ir.ui.view">
+      <field name="name">esms stored_number tree view</field>
+      <field name="model">sms.number</field>
+      <field name="inherit_id" ref="sms_frame.sms_number_view_tree" />
+      <field name="arch" type="xml">
+        <field name="account_id" position="after">
+          <field name="number_id" />
+          <field name="capabilities" />
+          <field name="active" />
+        </field>
       </field>
     </record>
   </data>
