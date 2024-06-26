@@ -8,7 +8,7 @@
    version="1.1"
    id="SVGRoot"
    sodipodi:docname="icon_140x140.svg"
-   inkscape:export-filename="/usr/share/odoo-base/base_46elks_send_sms/static/description/icon.png"
+   inkscape:export-filename="/run/user/1000/gvfs/sftp:host=linnea/usr/share/odoo-sms/base_46elks_send_sms/static/description/icon.png"
    inkscape:export-xdpi="92"
    inkscape:export-ydpi="92"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
@@ -53,10 +53,10 @@
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1128"
+     inkscape:window-width="2036"
      inkscape:window-height="805"
-     inkscape:window-x="720"
-     inkscape:window-y="144"
+     inkscape:window-x="265"
+     inkscape:window-y="212"
      inkscape:window-maximized="0"
      inkscape:pagecheckerboard="0" />
   <metadata
@@ -85,35 +85,88 @@
        style="stroke-width:4.60939169" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.0522px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="72.161728"
-       y="87.702263"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.7258px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="68.77948"
+       y="87.733749"
        id="text2035"
        inkscape:export-xdpi="92"
        inkscape:export-ydpi="92"
        inkscape:export-filename="/usr/share/odoo-base/elk46_send_sms/static/description/icon.png"><tspan
          sodipodi:role="line"
-         x="72.161728"
-         y="87.702263"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.5375px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1px"
-         id="tspan835">46Elks</tspan><tspan
+         x="68.77948"
+         y="87.733749"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.8461px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1px"
+         id="tspan835">SMS 46Elks</tspan><tspan
          sodipodi:role="line"
-         x="72.161728"
-         y="111.60664"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.5375px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1px"
-         id="tspan366">Send SMS</tspan></text>
-    <text
-       id="text845-2"
-       y="42.39505"
-       x="6.9329834"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:39.5584px;line-height:1.25;font-family:'Futura PT';-inkscape-font-specification:'Futura PT, Medium';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:0.994609;stroke:none;stroke-width:1"
-       xml:space="preserve"
-       inkscape:export-xdpi="92"
-       inkscape:export-ydpi="92"><tspan
-         style="fill:#ffffff;fill-opacity:0.994609;stroke-width:1"
-         y="42.39505"
-         x="6.9329834"
-         id="tspan843-9"
-         sodipodi:role="line"></tspan></text>
+         x="68.77948"
+         y="105.19542"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.8461px;font-family:Ubuntu;-inkscape-font-specification:'Ubuntu, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:1px"
+         id="tspan366">Gateway</tspan></text>
+    <image
+       width="38.478344"
+       height="43.645054"
+       preserveAspectRatio="none"
+       style="stroke-width:7.35478;image-rendering:optimizeQuality"
+       xlink:href="data:image/png;base64,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
+"
+       id="image24"
+       x="3.9273949"
+       y="3.3039703" />
   </g>
 </svg>
