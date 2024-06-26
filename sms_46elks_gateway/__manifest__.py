@@ -20,7 +20,7 @@
 ##############################################################################
 
 {
-    'name': 'Base: 46Elks Send SMS',
+    'name': 'SMS: 46Elks Gateway',
     'version': '16.0.0.0.0',
     # Version ledger: 16.0 = Odoo version. 1 = Major. Non regressionable code. 2 = Minor. New features that are regressionable. 3 = Bug fixes
     'summary': '',
