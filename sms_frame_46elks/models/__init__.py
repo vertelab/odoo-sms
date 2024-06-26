@@ -1,2 +1,0 @@
-import sms_gateway_46elks
-import sms_message
